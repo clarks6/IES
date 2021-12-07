@@ -7,3 +7,6 @@ Lab6 Q1 and Q2's code
 Question1 gets temperature measurement from the internal temperature sensor.
 Question2 gets temperature measurements from the internal and external temperature sensor. Q2 code has the external sensor marked as a humidity sensor, but it is in
 face the external temperature sensor. This was done because the external sensor doubles as a humidity and temperature sensor.
+
+Lab7's Code
+Lab7 includes the functions for the GUI tools/interfaces. Lab6's Q2's code was used for this lab to read from the same sensors.
