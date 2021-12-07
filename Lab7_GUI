@@ -1,0 +1,219 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+
+
+namespace Sensor2IoT
+{
+    public partial class Form1 : Form
+    {
+        int starflag = 0;
+        int flag_sensor;
+        string RxString;
+        string temp = "30";
+        int flip;           // Changes where the data is being uploaded to thingspeak
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            if (serialPort1.IsOpen)                         // You can't write to serialPort1 with it being open so it close it
+                serialPort1.Close();
+
+            serialPort1.PortName = "COM11";                 // Choose the right COM
+            serialPort1.BaudRate = 9600;                   
+
+        }
+
+        private void button5_Click(object sender, EventArgs e) //Serial Start Button
+        {
+            serialPort1.PortName = "COM11";                 // 
+            serialPort1.BaudRate = 9600;
+
+            serialPort1.Open();
+            if (serialPort1.IsOpen)
+            {
+                // startSerial.Enabled = false;
+                // serialStop.Enabled = true;
+                textBox1.ReadOnly = false;
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e) //Serial Stop Button
+        {
+            serialPort1.Close();
+            if (serialPort1.IsOpen)
+            {
+                // startSerial.Enabled = true;
+                // serialStop.Enabled = false;
+                textBox1.ReadOnly = false;
+                textBox2.ReadOnly = false;
+            }
+        }
+
+        private void button7_Click(object sender, EventArgs e) //Read TS Channel for Sensor 1
+        {
+            WebClient client = new WebClient();
+
+            label5.Text = client.DownloadString("http://api.thingspeak.com/channels/1590493/field/field1/last.text");
+        }
+
+        private void button8_Click(object sender, EventArgs e) //Read TS Channel for Sensor 2
+        {
+            WebClient client = new WebClient();
+
+            label6.Text = client.DownloadString("http://api.thingspeak.com/channels/1590493/field/field2/last.text");
+        }
+
+        private void label5_Click(object sender, EventArgs e) //Data Label from TS Channel for Sensor 1
+        {
+            
+        }
+
+        private void label6_Click(object sender, EventArgs e) //Data Label from TS Channel for Sensor 2
+        {
+            
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e) //Text Box for Current Data of Sensor 1
+        {
+
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e) //Text Box for Current Data of Sensor 2
+        {
+
+        }
+
+        private void SerialPort1_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
+        {
+            RxString = serialPort1.ReadExisting();
+
+            //Here is where to differ paths
+            int flipDecide = flip % 2; // will be zero if evem
+
+            if (flipDecide == 0)
+            {
+                this.Invoke(new EventHandler(label10_Click)); // Sending data from MSP into Label1o Function
+            }
+            else
+            {
+                this.Invoke(new EventHandler(label9_Click));  //  Sending data from MSP into Label9 Function
+            }
+
+
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)    // Timer used to check for data from the serial port every second, instead of continuously checking
+        {
+            if (!string.Equals(textBox1.Text, ""))
+            {
+                if (serialPort1.IsOpen) serialPort1.Close();
+                try
+                {
+                    /* if (RxString[0] == 'B')
+                     * {
+                     *      flag_sensor = 10;
+                     *  }*/
+
+                    const string WRITEKEY = "TGQ9H0J1XKFCDNKM";                     //Key to writing to ThingsSpeak
+                    string strUpdateBase = "http://api.thingspeak.com/update";
+
+                    string strUpdateURI = strUpdateBase + "?api_key=" + WRITEKEY;   //Update ThingsSpeak channel based on writekey
+                    string strField1 = textBox1.Text;                               //The data in textbox1 will go to chart 1
+
+
+                    HttpWebRequest ThingsSpeakReq;
+                    HttpWebResponse ThingsSpeakResp;
+                    strUpdateURI += "&field1=" + strField1;                         //update chart1 with what's in the first sensor
+
+                    flag_sensor++;
+                    ThingsSpeakReq = (HttpWebRequest)WebRequest.Create(strUpdateURI);
+
+                    ThingsSpeakResp = (HttpWebResponse)ThingsSpeakReq.GetResponse();
+                    ThingsSpeakResp.Close();
+
+                    if (!(string.Equals(ThingsSpeakResp.StatusDescription, "OK")))
+                    {
+                        Exception exData = new Exception(ThingsSpeakResp.StatusDescription);
+                        throw exData;
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                }
+                textBox1.Text = "";
+
+                serialPort1.Open();
+                }
+            else if(!string.Equals(textBox2.Text, ""))
+            {
+                if (serialPort1.IsOpen) serialPort1.Close();
+                try
+                {
+                    /* if (RxString[0] == 'B')
+                                         * {
+                                         *      flag_sensor = 10;
+                                         *  }*/
+
+                    const string WRITEKEY = "TGQ9H0J1XKFCDNKM";                     //Key to writing to ThingsSpeak
+                    string strUpdateBase = "http://api.thingspeak.com/update";
+
+                    string strUpdateURI = strUpdateBase + "?api_key=" + WRITEKEY;   //Update ThingsSpeak channel based on writekey
+                    string strField2 = textBox2.Text;                               //The data in textbox1 will go to chart 1
+
+
+                    HttpWebRequest ThingsSpeakReq;
+                    HttpWebResponse ThingsSpeakResp;
+                    strUpdateURI += "&field2=" + strField2;                         //update chart1 with what's in the first sensor
+
+                    flag_sensor++;
+                    ThingsSpeakReq = (HttpWebRequest)WebRequest.Create(strUpdateURI);
+
+                    ThingsSpeakResp = (HttpWebResponse)ThingsSpeakReq.GetResponse();
+                    ThingsSpeakResp.Close();
+
+                    if (!(string.Equals(ThingsSpeakResp.StatusDescription, "OK")))
+                    {
+                        Exception exData = new Exception(ThingsSpeakResp.StatusDescription);
+                        throw exData;
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                }
+                textBox2.Text = "";
+
+                serialPort1.Open();
+            }
+            }
+
+        private void label9_Click(object sender, EventArgs e) // Current Data label that gets data from sensor and adds it to the textbook
+        {
+             textBox2.AppendText(RxString);
+        }
+
+        private void label10_Click(object sender, EventArgs e) // Current Data label that gets data from sensor and adds it to the textbox
+        {
+             textBox1.AppendText(RxString);
+        }
+
+        private void timer2_Tick(object sender, EventArgs e)
+        {
+            flip++;
+        }
+    }      
+    }
